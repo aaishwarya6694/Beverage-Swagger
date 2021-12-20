@@ -1,0 +1,625 @@
+# open api speicification document - header with version
+# document should be named openapi.yaml or openapi.json
+openapi: "3.0.4"
+# general information
+info:
+  title: Beverage Service
+  version: "1.0"
+  description: | # | for multi line description
+    Beverage Service - Assignment 1 SOA-Summer Semester 2020
+  contact:
+    name: Aaishwarya Thoke
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+  - url: http://localhost:9998/v1
+    description: Development Server
+# reusable elements within the API specification
+components:
+  # data elements (JSON Schema)
+  schemas:
+    bottleDTO:
+      type: object
+      required:
+        - name
+        - price
+        - inStock
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        volume:
+          type: number
+        isAlcoholic:
+          type: boolean
+        volumePercent:
+          type: number
+        price:
+          type: number
+        supplier:
+          type: string
+        inStock:
+          type: number
+        href:
+          type: string
+      xml:
+        name: bottle
+    bottleShortDTO:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        price:
+          type: number
+      xml:
+        name: bottle
+    bottlePostDTO:
+      type: object
+      required:
+        - name
+        - price
+        - inStock
+      properties:
+        name:
+          type: string
+        volume:
+          type: number
+        isAlcoholic:
+          type: boolean
+        volumePercent:
+          type: number
+        price:
+          type: number
+        supplier:
+          type: string
+        inStock:
+          type: number
+    orderItemDTO:
+      type: object
+      required:
+        - beverage
+      properties:
+        id:
+          type: number
+        bottle:
+          $ref: "#/components/schemas/bottleShortDTO"
+        crate:
+          $ref: "#/components/schemas/crateShortDTO"
+        quantity:
+          type: number
+        href:
+          type: string
+      xml:
+        name: orderitem
+    orderItemPostDTO:
+      type: object
+      required:
+        - beverage
+      properties:
+        bottle:
+          $ref: "#/components/schemas/bottlePostDTO"
+        crate:
+          $ref: "#/components/schemas/cratePostDTO"
+        quantity:
+          type: number
+      xml:
+        name: orderitem
+    orderStatus:
+      type: string
+      enum: [SUBMITTED, PROCESSED]
+    crateDTO:
+      type: object
+      required:
+        - bottle
+      properties:
+        id:
+          type: number
+        bottle:
+          $ref: "#/components/schemas/bottleDTO"
+        noOfBottles:
+          type: number
+        price:
+          type: number
+        inStock:
+          type: number
+        href:
+          type: string
+    cratePostDTO:
+      type: object
+      required:
+        - bottle
+      properties:
+        bottle:
+          $ref: "#/components/schemas/bottlePostDTO"
+        noOfBottles:
+          type: number
+        price:
+          type: number
+        inStock:
+          type: number
+    crateShortDTO:
+      type: object
+      required:
+        - bottle
+      properties:
+        bottle:
+          $ref: "#/components/schemas/bottleShortDTO"
+        noOfBottles:
+          type: number
+        price:
+          type: number
+    orderDTO:
+      type: object
+      required:
+        - positions
+      properties:
+        id:
+          type: number
+        orderItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/orderItemDTO"
+        price:
+          type: number
+        status:
+          $ref: "#/components/schemas/orderStatus"
+        href:
+          type: string
+    orderPostDTO:
+      type: object
+      required:
+        - positions
+      properties:
+        orderItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/orderItemPostDTO"
+        price:
+          type: number
+        status:
+          $ref: "#/components/schemas/orderStatus"
+    errorMessage:
+      type: object
+      required:
+        - errorType
+      properties:
+        errorType:
+          description: error category, should be extended
+          enum:
+            - INVALID_PARAMETER
+        message:
+          type: string
+          description: A detailed error description
+    pagination:
+      type: object
+      properties:
+        page:
+          type: number
+        noOfPages:
+          type: number
+        first:
+          type: string
+        previous:
+          type: string
+        next:
+          type: string
+        last:
+          type: string
+    paginatedOrders:
+      type: object
+      properties:
+        pagination:
+          $ref: "#/components/schemas/pagination"
+        orders:
+          type: array
+          items:
+            $ref: "#/components/schemas/orderDTO"
+        href:
+          type: string
+    paginatedCrates:
+      type: object
+      properties:
+        pagination:
+          $ref: "#/components/schemas/pagination"
+        crates:
+          type: array
+          items:
+            $ref: "#/components/schemas/crateDTO"
+        href:
+          type: string
+    paginatedBottles:
+      type: object
+      properties:
+        pagination:
+          $ref: "#/components/schemas/pagination"
+        bottles:
+          type: array
+          items:
+            $ref: "#/components/schemas/bottleDTO"
+        href:
+          type: string
+# resources (one of the REST principles)
+paths:
+  /orders:
+    description: A catalog of all orders
+    # Operations/methods via standard HTTP verbs
+    get:
+      summary: Get orders on a specific page
+      # request parameters
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: number
+            default: 1
+        - name: pageLimit
+          in: query
+          schema:
+            type: number
+            default: 10
+      # possible responses and their parameters
+      responses:
+        200:
+          description: Orders on the page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/paginatedOrders"
+        400:
+          description: A bad request initiated by the user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errorMessage"
+    post:
+      summary: Creates a Order
+      description: |
+        This is a multiline
+        long description for creating a order
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/orderPostDTO"
+      responses:
+        201:
+          description: Created your order successfully
+        400:
+          description: Parameters validation of Order
+          content:
+            application/*:
+              schema:
+                $ref: "#/components/schemas/errorMessage"
+  /orders/search:
+    description: A catalog of all orders between minimum price and maximum price range
+    # Operations/methods via standard HTTP verbs
+    get:
+      summary: Get bottles between price range
+      # request parameters
+      parameters:
+        - name: min
+          in: query
+          schema:
+            type: number
+        - name: max
+          in: query
+          schema:
+            type: number
+      responses:
+        200:
+          description: Orders between given price range
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/orderDTO"
+        404:
+          description: Bottles within given min and max range not found
+  /orders/cancel/{orderId}:
+    parameters:
+      - name: orderId
+        # path parameters must be always mandatory!!
+        required: true
+        in: path
+        schema:
+          type: number
+    put:
+      summary: Cancel specific order
+      responses:
+        200:
+          description: Order cancelled
+        404:
+          description: Order with given id not found
+        403:
+          description: Order is already processed
+          content:
+            application/*:
+              schema:
+                $ref: "#/components/schemas/errorMessage"
+  /orders/{orderId}:
+    # this parameter definition is valid for all subsequent methods
+    parameters:
+      - name: orderId
+        # path parameters must be always mandatory!!
+        required: true
+        in: path
+        schema:
+          type: number
+    get:
+      summary: Get a single orders by id
+      responses:
+        200:
+          description: Getting a specific orders's detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/orderDTO"
+        404:
+          description: Order with given id not found
+    put:
+      summary: Update specific order
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/orderPostDTO"
+      responses:
+        200:
+          description: Updating a order
+          content:
+            application/*:
+              # response schema
+              schema:
+                $ref: "#/components/schemas/orderDTO"
+        400:
+          description: Parameters validation of Order
+          content:
+            application/*:
+              schema:
+                $ref: "#/components/schemas/errorMessage"
+        404:
+          description: Order with given id not found
+        403:
+          description: Order is already processed
+          content:
+            application/*:
+              schema:
+                $ref: "#/components/schemas/errorMessage"
+    delete:
+      summary: Delete Order
+      responses:
+        200:
+          description: Order deleted
+        404:
+          description: Order with given id not found
+  /bottles:
+    description: A catalog of all bottles
+    # Operations/methods via standard HTTP verbs
+    get:
+      summary: Get bottles on a specific page
+      # request parameters
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: number
+            default: 1
+        - name: pageLimit
+          in: query
+          schema:
+            type: number
+            default: 10
+      # possible responses and their parameters
+      responses:
+        200:
+          description: Orders on the page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/paginatedBottles"
+        400:
+          description: A bad request initiated by the user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errorMessage"
+    post:
+      summary: Creates a Bottle
+      description: |
+        This is a multiline
+        long description for creating a bottle
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/bottlePostDTO"
+      responses:
+        201:
+          description: Created your bottle successfully
+        400:
+          description: Parameters validation of bottle
+          content:
+            application/*:
+              schema:
+                $ref: "#/components/schemas/errorMessage"
+  /bottles/search:
+    description: A catalog of all bottles between minimum price and maximum price range
+    # Operations/methods via standard HTTP verbs
+    get:
+      summary: Get bottles between price range
+      # request parameters
+      parameters:
+        - name: min
+          in: query
+          schema:
+            type: number
+        - name: max
+          in: query
+          schema:
+            type: number
+      responses:
+        200:
+          description: Bottles between given price range
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/bottleDTO"
+        404:
+          description: Bottles within given min and max range not found
+  /bottles/{bottleId}:
+    # this parameter definition is valid for all subsequent methods
+    parameters:
+      - name: bottleId
+        # path parameters must be always mandatory!!
+        required: true
+        in: path
+        schema:
+          type: number
+    get:
+      summary: Get a single bottle by id
+      responses:
+        200:
+          description: Getting a specific bottle's detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/bottleDTO"
+        404:
+          description: Bottle with given id not found
+    put:
+      summary: Update specific bottle
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/bottlePostDTO"
+      responses:
+        200:
+          description: Updating a bottle
+          content:
+            application/*:
+              # response schema
+              schema:
+                $ref: "#/components/schemas/bottleDTO"
+        400:
+          description: Parameters validation of Bottle
+          content:
+            application/*:
+              schema:
+                $ref: "#/components/schemas/errorMessage"
+        404:
+          description: Bottle with given id not found
+    delete:
+      summary: Delete Bottle
+      responses:
+        200:
+          description: Bottle deleted
+        404:
+          description: Bottle with given id not found
+  /crates:
+    description: A catalog of all crates
+    # Operations/methods via standard HTTP verbs
+    get:
+      summary: Get crates on a specific page
+      # request parameters
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: number
+            default: 1
+        - name: pageLimit
+          in: query
+          schema:
+            type: number
+            default: 10
+      # possible responses and their parameters
+      responses:
+        200:
+          description: Crates on the page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/paginatedCrates"
+        400:
+          description: A bad request initiated by the user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errorMessage"
+    post:
+      summary: Creates a Crate
+      description: |
+        This is a multiline
+        long description for creating a bottle
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/cratePostDTO"
+      responses:
+        201:
+          description: Created your crate successfully
+        400:
+          description: Parameters validation for crate
+          content:
+            application/*:
+              schema:
+                $ref: "#/components/schemas/errorMessage"
+  /crates/{crateId}:
+    # this parameter definition is valid for all subsequent methods
+    parameters:
+      - name: crateId
+        # path parameters must be always mandatory!!
+        required: true
+        in: path
+        schema:
+          type: number
+    get:
+      summary: Get a single orders by id
+      responses:
+        200:
+          description: Getting a specific orders's detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/crateDTO"
+        404:
+          description: Crate with given id not found
+    put:
+      summary: Update specific crate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/cratePostDTO"
+      responses:
+        200:
+          description: Updating a crate
+          content:
+            application/*:
+              # response schema
+              schema:
+                $ref: "#/components/schemas/crateDTO"
+        400:
+          description: Parameters validation for Crate
+          content:
+            application/*:
+              schema:
+                $ref: "#/components/schemas/errorMessage"
+        404:
+          description: Not found
+    delete:
+      summary: Delete Crate
+      responses:
+        200:
+          description: Crate deleted
+        404:
+          description: Crate with given id not found
